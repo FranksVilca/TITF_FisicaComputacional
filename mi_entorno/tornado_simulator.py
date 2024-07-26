@@ -13,8 +13,10 @@ class TornadoSimulator:
         self.lon_center, self.lat_center = -100, 35
         self.R0 = 0.1  # Radio del núcleo sólido del vórtice de Rankine
         self.circulation = 1.0  # Circulación del vórtice
-        self.fig, self.ax = plt.subplots(figsize=(12, 8), subplot_kw={'projection': ccrs.PlateCarree()})
-        self.ax.set_extent([-130, -65, 24, 50], crs=ccrs.PlateCarree())  # Focalizando en Estados Unidos
+
+        # Configura la figura y el eje
+        self.fig, self.ax = plt.subplots(figsize=(14, 10), subplot_kw={'projection': ccrs.PlateCarree()})
+        self.ax.set_extent([-130, -65, 24, 50], crs=ccrs.PlateCarree())  # Ajusta la extensión del mapa
         self.ax.add_feature(cfeature.COASTLINE)
         self.ax.add_feature(cfeature.BORDERS)
         self.ax.add_feature(cfeature.STATES)
@@ -28,34 +30,35 @@ class TornadoSimulator:
 
         self.particulas = self.ax.scatter(self.lon_center + self.x, self.lat_center + self.y, c='blue', transform=ccrs.PlateCarree())
 
+        # Configuración de sliders y botones
         self.slider_radius = plt.axes([0.2, 0.02, 0.65, 0.03], facecolor='lightgoldenrodyellow')
         self.slider_radius_bar = Slider(self.slider_radius, 'Radio del Tornado', 0.1, 10.0, valinit=self.radius_max, valstep=0.1)
         self.slider_radius_bar.on_changed(self.update_radius)
 
         self.slider_velocity = plt.axes([0.2, 0.06, 0.65, 0.03], facecolor='lightgoldenrodyellow')
-        self.slider_velocity_bar = Slider(self.slider_velocity, 'Velocidad de Partículas', 0.001, 0.1, valinit=0.01, valstep=0.001)
+        self.slider_velocity_bar = Slider(self.slider_velocity, 'Velocidad de Partículas', 0.001, 2.0, valinit=0.01, valstep=0.001)
         self.slider_velocity_bar.on_changed(self.update_velocity)
 
         self.particles_value = 1
         self.lifetime_value = 5.0
 
-        # Layout de los controles
-        self.text_particles_label = plt.text(0.24, 0.11, f'Partículas/s: {self.particles_value}', transform=self.fig.transFigure,
+        # Layout de los controles con más espacio
+        self.text_particles_label = plt.text(0.24, 0.14, f'Partículas/s: {self.particles_value}', transform=self.fig.transFigure,
                                              fontsize=12, color='black', ha='center', va='center')
 
-        self.increase_particles_button = plt.axes([0.3, 0.10, 0.05, 0.03], facecolor='lightgoldenrodyellow')
-        self.decrease_particles_button = plt.axes([0.36, 0.10, 0.05, 0.03], facecolor='lightgoldenrodyellow')
+        self.increase_particles_button = plt.axes([0.3, 0.12, 0.05, 0.03], facecolor='lightgoldenrodyellow')
+        self.decrease_particles_button = plt.axes([0.36, 0.12, 0.05, 0.03], facecolor='lightgoldenrodyellow')
 
         self.increase_particles = Button(self.increase_particles_button, '+', color='lightgoldenrodyellow', hovercolor='lightblue')
         self.decrease_particles = Button(self.decrease_particles_button, '-', color='lightgoldenrodyellow', hovercolor='lightblue')
         self.increase_particles.on_clicked(self.increase_particles_per_second)
         self.decrease_particles.on_clicked(self.decrease_particles_per_second)
 
-        self.text_lifetime_label = plt.text(0.52, 0.11, f'Tiempo de Vida: {self.lifetime_value:.2f}', transform=self.fig.transFigure,
+        self.text_lifetime_label = plt.text(0.52, 0.14, f'Tiempo de Vida: {self.lifetime_value:.2f}', transform=self.fig.transFigure,
                                             fontsize=12, color='black', ha='center', va='center')
 
-        self.increase_lifetime_button = plt.axes([0.6, 0.10, 0.05, 0.03], facecolor='lightgoldenrodyellow')
-        self.decrease_lifetime_button = plt.axes([0.66, 0.10, 0.05, 0.03], facecolor='lightgoldenrodyellow')
+        self.increase_lifetime_button = plt.axes([0.6, 0.12, 0.05, 0.03], facecolor='lightgoldenrodyellow')
+        self.decrease_lifetime_button = plt.axes([0.66, 0.12, 0.05, 0.03], facecolor='lightgoldenrodyellow')
 
         self.increase_lifetime = Button(self.increase_lifetime_button, '+', color='lightgoldenrodyellow', hovercolor='lightblue')
         self.decrease_lifetime = Button(self.decrease_lifetime_button, '-', color='lightgoldenrodyellow', hovercolor='lightblue')
@@ -155,36 +158,38 @@ class TornadoSimulator:
         print(f'Radio del tornado actualizado: {radius:.2f}')
 
     def update_velocity(self, velocity):
+        # Actualiza la velocidad de partículas usando el valor del slider
         print(f'Velocidad de partículas actualizada: {velocity:.3f}')
 
     def increase_particles_per_second(self, event):
-        self.particles_per_second += 1
-        self.text_particles_label.set_text(f'Partículas/s: {self.particles_per_second}')
-        print(f'Número de partículas por segundo actualizado: {self.particles_per_second}')
+        self.particles_value += 1
+        self.particles_per_second = self.particles_value
+        self.text_particles_label.set_text(f'Partículas/s: {self.particles_value}')
 
     def decrease_particles_per_second(self, event):
-        self.particles_per_second = max(1, self.particles_per_second - 1)
-        self.text_particles_label.set_text(f'Partículas/s: {self.particles_per_second}')
-        print(f'Número de partículas por segundo actualizado: {self.particles_per_second}')
+        if self.particles_value > 1:
+            self.particles_value -= 1
+            self.particles_per_second = self.particles_value
+            self.text_particles_label.set_text(f'Partículas/s: {self.particles_value}')
 
     def increase_lifetime_per_second(self, event):
-        self.particle_lifetime += 0.5
-        self.text_lifetime_label.set_text(f'Tiempo de Vida: {self.particle_lifetime:.2f}')
-        print(f'Tiempo de vida de las partículas actualizado: {self.particle_lifetime:.2f}')
+        self.lifetime_value += 1.0
+        self.particle_lifetime = self.lifetime_value
+        self.text_lifetime_label.set_text(f'Tiempo de Vida: {self.lifetime_value:.2f}')
 
     def decrease_lifetime_per_second(self, event):
-        self.particle_lifetime = max(0.1, self.particle_lifetime - 0.5)
-        self.text_lifetime_label.set_text(f'Tiempo de Vida: {self.particle_lifetime:.2f}')
-        print(f'Tiempo de vida de las partículas actualizado: {self.particle_lifetime:.2f}')
+        if self.lifetime_value > 1.0:
+            self.lifetime_value -= 1.0
+            self.particle_lifetime = self.lifetime_value
+            self.text_lifetime_label.set_text(f'Tiempo de Vida: {self.lifetime_value:.2f}')
 
     def on_click(self, event):
         if event.inaxes == self.ax:
             self.lon_center, self.lat_center = event.xdata, event.ydata
-            print(f'Nuevo centro del tornado: longitud {self.lon_center:.2f}, latitud {self.lat_center:.2f}')
+            print(f'Nuevo centro del tornado: ({self.lon_center:.2f}, {self.lat_center:.2f})')
 
-def start_animation():
-    sim = TornadoSimulator(num_particulas=100, num_frames=200)
+if __name__ == '__main__':
+    num_particulas = 500
+    num_frames = 500
+    sim = TornadoSimulator(num_particulas, num_frames)
     sim.animate()
-
-if __name__ == "__main__":
-    start_animation()
